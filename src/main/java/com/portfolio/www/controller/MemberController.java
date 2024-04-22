@@ -32,6 +32,8 @@ public class MemberController {
 			case -2:
 				msg = "중복 등록된 ID입니다.";
 				break;
+			case -3:
+				msg = "인증 메일 발송에 실패했습니다. 관리자에게 문의하세요.";
 		}
 		model.addAttribute("msg", msg);
 		
@@ -40,8 +42,6 @@ public class MemberController {
 	
 	@RequestMapping("/login.do")
 	public String login(@ModelAttribute LoginForm form, Model model) {	
-		System.out.println(form);
-		
 		String msg = "로그인에 실패했습니다.";
 		if (memberService.login(form)) {
 			msg = "로그인에 성공했습니다.";

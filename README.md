@@ -60,6 +60,16 @@
 
 7. 회원 가입 페이지로 이동한다. (`location.href='/11005/join-page.do'`)
 
+### 회원 가입 시 인증 메일 전송
+
+1. `MemberService`의 `signUp()`의 모든 검증이 끝난 후부터 시작
+
+2. `member_auth` 인증에 필요한 정보 `MemberAuthDto` 만든 후 `member_auth` 테이블에 삽입: `makeMemberAuthDto()` → `addMemberAuthInfo()`
+
+3. 인증 메일 전송에 필요한 `EmailDto` 만든 후 인증 메일 보내기: `makeEmailDto()` → `sendEmail()`
+
+   → 전송에 실패하면 `-3` 리턴
+
 ## 🔨 기능 요구사항
 
 ### 프로젝트 환경 설정하기
@@ -215,3 +225,37 @@ com.portfolio.www.dao.JoinDao.findMemberByUsername(JoinDao.java:27)
 결론부터 말하자면 웹 브라우저의 새로 고침은 마지막에 서버에 전송한 데이터를 다시 전송하는 작업을 한다. 그렇기 때문에 `POST /join.do` + `회원 가입 폼에서 입력한 회원 데이터` 이 작업이 계속해서 반복된다. 따라서 회원 내용은 같고 `member_seq`만 증가한 `Member`의 데이터가 계속 추가된다. 여기에서 왜 `location.href`를 통해 페이지 이동을 하는지 알 수 있다. 다시 회원 가입 폼(`/joinPage.do`)으로 이동하게 되면 아무리 새로고침을 해도 웹 브라우저는 그저 회원 가입 폼만을 보여주게 된다.
 
 위와 같은 방식을 `Post/Redirect/Get` 줄여서 `PRG`라 하며 지금은 `login.jsp`에서 직접 페이지를 회원 가입 폼(`/joinPage.do`)으로 이동했지만 `Spring`의 `redirect:`와 더불어 `RedirectAttributes` 기능을 사용하게 되면 폼 전송 후 자동으로 redirect 하게 된다.
+
+### `setText()` 메서드 오버로딩
+
+`EmailUtil`의 메서드 `sendMail()`을 보면 메서드가 오버로딩 되어있는 것을 볼 수 있다. 왜 그런 것일까?
+
+회원이 클릭할 수 있는 링크가 담긴 이메일을 받기 위해서는 이메일 본문을 `HTML` 태그 형식으로 보내야 한다. 그렇게 하기 위해서는 우선 `MimeMessageHelper`의 `setText`메서드를 살펴봐야 한다.
+
+```java
+public void setText(String text) throws MessagingException {
+  setText(text, false);
+}
+
+/**
+	 * Set the given text directly as content in non-multipart mode
+	 * or as default body part in multipart mode.
+	 * The "html" flag determines the content type to apply.
+	 * <p><b>NOTE:</b> Invoke {@link #addInline} <i>after</i> {@code setText};
+	 * else, mail readers might not be able to resolve inline references correctly.
+	 * @param text the text for the message
+	 * @param html whether to apply content type "text/html" for an
+	 * HTML mail, using default content type ("text/plain") else
+	 * @throws MessagingException in case of errors
+	 */
+public void setText(String text, boolean html) throws MessagingException {
+  // ...
+}
+```
+
+주석을 보면 `@param html`에 대한 설명이 있는데 요약하면 다음과 같다.
+
+- `content type "text/html"`의 형식 → `html`의 값: `true`
+- `content type "text/plain"`의 형식 → `html`의 값: `false`
+
+실제로도 매개 변수가 하나만 있는 `setText()`를 사용하면 `text/plain` 형식으로 `html` 본문이 구성된다. 이때, `setText(String text)` 안에는 `setText(String text, boolean html)`가 있는 것을 확인할 수 있다. 이와 같이, 어떤 메서드의 어떤 파라미터를 기본값으로 지정(`text/plain`)해주고 싶을 때와 아닌 경우를 구별할 떄 이러한 메서드 오버로딩 방식이 많이 사용된다.

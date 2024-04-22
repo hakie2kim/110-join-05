@@ -31,4 +31,9 @@ public class MemberDao extends JdbcTemplate {
 		String sql = String.format("SELECT passwd FROM forum.`member` WHERE member_id = '%s';", form.getUsername());
 		return queryForObject(sql, String.class);
 	}
+	
+	public int findMemberSeqByUsername(String username) {
+		String sql = String.format("SELECT member_seq FROM forum.`member` WHERE member_id = '%s';", username);
+		return queryForObject(sql, Integer.class);
+	}
 }
