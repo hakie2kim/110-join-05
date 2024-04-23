@@ -1,12 +1,22 @@
 package com.portfolio.www.dto;
 
 public class MemberAuthDto {
+	private int authSeq;
 	private int memberSeq;
 	private String authNum;
 	private String authUri;
 	private String regDtm;
 	private Long expireDtm;
 	private String authYn;
+	
+
+	public int getAuthSeq() {
+		return authSeq;
+	}
+
+	public void setAuthSeq(int authSeq) {
+		this.authSeq = authSeq;
+	}
 
 	public int getMemberSeq() {
 		return memberSeq;

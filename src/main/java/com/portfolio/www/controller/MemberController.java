@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.portfolio.www.domain.SignUpForm;
 import com.portfolio.www.domain.LoginForm;
@@ -45,6 +46,17 @@ public class MemberController {
 		String msg = "로그인에 실패했습니다.";
 		if (memberService.login(form)) {
 			msg = "로그인에 성공했습니다.";
+		}
+		model.addAttribute("msg", msg);
+		
+		return "login";
+	}
+	
+	@RequestMapping("/emailAuth.do")
+	public String emailAuth(@RequestParam("uri") String uri, Model model) {
+		String msg = "회원 인증에 실패했습니다.";
+		if (memberService.emailAuth(uri)) {
+			msg = "회원 인증에 성공했습니다.";
 		}
 		model.addAttribute("msg", msg);
 		

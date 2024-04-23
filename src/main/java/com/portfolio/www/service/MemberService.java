@@ -46,7 +46,7 @@ public class MemberService {
 			
 			// 2. 인증 메일 전송에 필요한 dto 만든 후 인증 메일 보내기
 			EmailDto emailDto = makeEmailDto(form, memAuthDto);
-			String sendEmailResult = emailUtil.sendEmail(emailDto);
+			String sendEmailResult = emailUtil.sendEmail(emailDto, true);
 			
 			// 인증 메일 발송에 실패한 경우
 			if (sendEmailResult.equals("Error"))
@@ -63,7 +63,7 @@ public class MemberService {
 		emailDto.setSubject("회원 가입 인증을 위한 메일 안내입니다.");
 		
 		// host + context root + uri
-		String html = String.format("<a href='http://localhost:8080/11005/emailAuth.do?uri=%s'>회원 가입 인증 하기</>",
+		String html = String.format("<a href='http://localhost:8080/11005/emailAuth.do/%s'>회원 가입 인증 하기</>",
 					memAuthDto.getAuthUri()
 				);
 		emailDto.setText(html);
@@ -124,5 +124,17 @@ public class MemberService {
 		System.out.println("result.verified >>>>>>>>> " + result.verified);
 		
 		return encPassword;
+	}
+	
+	public boolean emailAuth(String uri) {
+		MemberAuthDto dto = memberAuthDao.findMemberAuthByUri(uri);
+		
+		long now = Calendar.getInstance().getTimeInMillis();
+		if (now < dto.getExpireDtm()) {
+			memberAuthDao.changeAuthYn(uri);
+			return true;
+		}
+			
+		return false;
 	}
 }

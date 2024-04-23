@@ -60,15 +60,23 @@
 
 7. 회원 가입 페이지로 이동한다. (`location.href='/11005/join-page.do'`)
 
-### 회원 가입 시 인증 메일 전송
+### 회원 인증
 
-1. `MemberService`의 `signUp()`의 모든 검증이 끝난 후부터 시작
+#### 회원 가입 시 인증 메일 발송하기
+
+1. `MemberService`의 `signUp()`의 모든 검증이 끝난 후부터 시작한다.
 
 2. `member_auth` 인증에 필요한 정보 `MemberAuthDto` 만든 후 `member_auth` 테이블에 삽입: `makeMemberAuthDto()` → `addMemberAuthInfo()`
 
 3. 인증 메일 전송에 필요한 `EmailDto` 만든 후 인증 메일 보내기: `makeEmailDto()` → `sendEmail()`
 
    → 전송에 실패하면 `-3` 리턴
+
+#### 인증 완료 후 `member_auth`의 `auth_yn`를 `'Y'`로 변경
+
+1. 회원이 이메일 속 링크를 클릭하면 `/emailAuth.do?uri=...`로 연결된다.
+
+2. `MemberService`의 `emailAuth()`는 현재 시간과 `member_auth`의 `expire_dtm`을 비교해 인증 만료 시간이 지나지 않은 경우에만 `auth_yn`를 `'Y'`로 변경한다.
 
 ## 🔨 기능 요구사항
 
@@ -102,7 +110,11 @@
 
   - [x] 회원 테이블에 정보 입력하기
 
-  - [ ] 회원 가입 완료 시 웰컴 이메일 발송하기
+  - [x] 회원 인증
+
+    - [x] 회원 가입 시 인증 이메일 발송하기
+
+    - [x] 인증 완료 후 `member_auth`의 `auth_yn`를 `'Y'`로 변경
 
   - [x] 회원가입 성공/실패에 따른 `alert()` 노출하기
 
@@ -174,7 +186,7 @@ Caused by: org.springframework.beans.factory.BeanCreationException: Error creati
 
 - [x] `DataSource dataSource` 필드에 `@Autowired` 의존성 주입 추가
 
-### `sql` 쿼리 문법 오류
+### `sql` 쿼리 문법 오류 (1)
 
 #### 문제 상황
 
@@ -191,6 +203,85 @@ com.portfolio.www.dao.JoinDao.findMemberByUsername(JoinDao.java:27)
 #### 해결 방법
 
 - [x] `queryForObject()`의 두번째 인자로 `Integer.class`를 제공하고 쿼리를 `SELECT COUNT(*) FROM ...`으로 변경해 해당 `member`가 몇 명 있는지 알아냄.
+
+### `sql` 쿼리 문법 오류 (2)
+
+#### 문제 상황
+
+다음과 같은 에러가 발생했다.
+
+```java
+13 String sql = String.format("INSERT INTO forum.member_auth "
+14				+ "(member_seq, auth_num, auth_uri, reg_dtm, expire_dtm, auth_yn) "
+15				+ "VALUES(%d, '', %s, DATE_FORMAT(NOW(), '%Y%m%d%H%i%s'), %d, 'N'); ", dto.getMemberSeq(), dto.getAuthUri(), dto.getExpireDtm());
+```
+
+```
+org.springframework.web.util.NestedServletException: Request processing failed; nested exception is java.util.UnknownFormatConversionException: Conversion = 'Y'
+...
+com.portfolio.www.dao.MemberAuthDao.addMemberAuthInfo(MemberAuthDao.java:13)
+...
+```
+
+`String.format()`을 사용했을 때 `%Y`를 형식 지정자로 인식해 변환하려 한 것 같다.
+
+### `queryForObject()`
+
+#### 문제 상황
+
+```java
+24 public MemberAuthDto findMemberAuthByUri(String uri) {
+25   String sql = String.format("SELECT * FROM forum.member_auth WHERE auth_uri = '%s'; ", uri);
+26   return queryForObject(sql, MemberAuthDto.class);
+  // ...
+```
+
+```
+org.springframework.jdbc.IncorrectResultSetColumnCountException: Incorrect column count: expected 1, actual 7
+...
+com.portfolio.www.dao.MemberAuthDao.findMemberAuthByUri(MemberAuthDao.java:26)
+```
+
+#### 해결 방법
+
+`queryForObject(String sql, Class<T> requiredType)`의 두번째 인자는 기본형 래퍼 클래스만 가능하다. 따라서 다음과 같이 다른 메서드를 사용하였다.
+
+```java
+return query(sql, new ResultSetExtractor<MemberAuthDto>() {
+  public MemberAuthDto extractData(ResultSet rs) throws SQLException, DataAccessException {
+    MemberAuthDto dto = null;
+
+    if (rs.next()) {
+      dto = new MemberAuthDto();
+      dto.setAuthSeq(rs.getInt("auth_seq"));
+      dto.setMemberSeq(rs.getInt("member_seq"));
+      dto.setAuthNum(rs.getString("auth_num"));
+      dto.setAuthUri(rs.getString("auth_uri"));
+      dto.setRegDtm(rs.getString("reg_dtm"));
+      dto.setExpireDtm(rs.getLong("expire_dtm"));
+      dto.setAuthYn(rs.getString("auth_yn"));
+    }
+
+    return dto;
+  }
+});
+```
+
+### `sql` data truncation
+
+#### 문제 상황
+
+시간을 대소비교 할 때는 숫자로 비교하는 것이 가장 편하기 때문에 기존 `member_auth`의 `expire_dtm`의 데이터 타입을 `INT`로 변경했다.
+
+```
+Request processing failed; nested exception is org.springframework.dao.DataIntegrityViolationException: StatementCallback; SQL [INSERT INTO forum.member_auth (member_seq, auth_num, auth_uri, reg_dtm, expire_dtm, auth_yn) VALUES(56, '', 'e67ff01ee499423285426bbb44d05df5', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s'), 1713673255884, 'N');]; Data truncation: Incorrect datetime value: '1713673255884' for column 'expire_dtm' at row 1; nested exception is com.mysql.cj.jdbc.exceptions.MysqlDataTruncation: Data truncation: Incorrect datetime value: '1713673255884' for column 'expire_dtm' at row 1
+```
+
+Data truncation이라는 단어에서 알 수 있듯이 `1713673255884`을 datetime 타입으로 변경하려다 값의 범위를 넘어 데이터 일부가 소실된다는 에러이다.
+
+#### 해결 방법
+
+`member_auth`의 `expire_dtm`의 데이터 타입을 더 큰 값의 범위를 담을 수 있는 `BIGINT`로 변경했다.
 
 ## 📝 메모
 
