@@ -51,9 +51,13 @@ public class MemberController {
 		
 		return "login";
 	}
-	
+
 	@RequestMapping("/emailAuth.do")
 	public String emailAuth(@RequestParam("uri") String uri, Model model) {
+		if (uri.trim().isEmpty()) {
+			throw new IllegalArgumentException();
+		}
+		
 		String msg = "회원 인증에 실패했습니다.";
 		if (memberService.emailAuth(uri)) {
 			msg = "회원 인증에 성공했습니다.";

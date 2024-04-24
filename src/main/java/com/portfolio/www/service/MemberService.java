@@ -128,6 +128,9 @@ public class MemberService {
 	
 	public boolean emailAuth(String uri) {
 		MemberAuthDto dto = memberAuthDao.findMemberAuthByUri(uri);
+		if (dto == null) {
+			return false;
+		}
 		
 		long now = Calendar.getInstance().getTimeInMillis();
 		if (now < dto.getExpireDtm()) {

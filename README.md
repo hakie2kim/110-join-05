@@ -72,11 +72,11 @@
 
    → 전송에 실패하면 `-3` 리턴
 
-#### 인증 완료 후 `member_auth`의 `auth_yn`를 `'Y'`로 변경
+#### 인증 완료 후 인증 여부 반영
 
 1. 회원이 이메일 속 링크를 클릭하면 `/emailAuth.do?uri=...`로 연결된다.
 
-2. `MemberService`의 `emailAuth()`는 현재 시간과 `member_auth`의 `expire_dtm`을 비교해 인증 만료 시간이 지나지 않은 경우에만 `auth_yn`를 `'Y'`로 변경한다.
+2. `MemberService`의 `emailAuth()`는 현재 시간과 `member_auth`의 `expire_dtm`을 비교해 인증 만료 시간이 지나지 않은 경우에만 `auth_yn`을 `'Y'`로 변경한다.
 
 ## 🔨 기능 요구사항
 
@@ -96,7 +96,7 @@
 
 - [x] css, js 파일 resources tag 설정
 
-  - 프로젝트 컨텍스트 루트를 `<c:url/>` `JSTL` 태그를 이용해 모든 경로 앞에 추가해줌
+  - [x] 프로젝트 컨텍스트 루트를 `<c:url/>` `JSTL` 태그를 이용해 모든 경로 앞에 추가해줌
 
 ### Servlet 구성 및 접속
 
@@ -114,13 +114,23 @@
 
     - [x] 회원 가입 시 인증 이메일 발송하기
 
-    - [x] 인증 완료 후 `member_auth`의 `auth_yn`를 `'Y'`로 변경
+    - [x] 인증 완료 후 인증 여부 반영
 
   - [x] 회원가입 성공/실패에 따른 `alert()` 노출하기
 
 - [x] 로그인 : `/login.do`
 
-  - 로그인 성공/실패에 따른 `alert()` 노출하기
+  - [x] 로그인 성공/실패에 따른 `alert()` 노출하기
+
+### 예외 처리
+
+- [x] `/emailAuth.do`의 `uri` 값이 빈 문자열이거나 `null`인 경우 (추후 보완 예정)
+
+- [x] `MemberAuthDao`의 `findMemberAuthByUri`의 리턴 값이 `null`인 경우 (추후 보완 예정)
+
+### 기타
+
+- [x] `JavaMailSender`의 `username`과 `password` 암호화
 
 ## 🐿️ Docker DB
 
