@@ -8,13 +8,13 @@ session = request.getSession();
 <meta charset="UTF-8">
 <title>Insert title here</title>
 <script type="text/javascript">
-function doLogout() {
-	window.location.href = '/05/logout.do';
+function logout() {
+	window.location.href = '/11005/logout.do';
 }
 </script>
 </head>
 <body>
 	memberId = ${sessionScope.memberId}
-	<input type="button" value="Logout" onClick="javascript:doLogout()"> 
+	<input type="button" value="Logout" onClick="javascript:logout()"> 
 </body>
 </html>

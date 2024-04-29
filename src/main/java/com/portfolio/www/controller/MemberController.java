@@ -59,7 +59,7 @@ public class MemberController {
 				HttpSession session = request.getSession();
 				session.setAttribute("memberId", memberDto.getMemberId());
 				msg = "로그인에 성공했습니다.";
-				return "main";
+				return "redirect:/main-page.do";
 				
 			} else {
 				msg = "로그인에 실패했습니다.";
@@ -86,5 +86,11 @@ public class MemberController {
 		model.addAttribute("msg", msg);
 		
 		return "login";
+	}
+	
+	@RequestMapping("/logout.do")
+	public String logout(HttpServletRequest request) {
+		request.getSession(false).invalidate();
+		return "redirect:/join-page.do";
 	}
 }
