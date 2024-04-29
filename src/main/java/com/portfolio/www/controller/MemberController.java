@@ -1,14 +1,19 @@
 package com.portfolio.www.controller;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.portfolio.www.domain.SignUpForm;
+import com.portfolio.www.dto.MemberDto;
 import com.portfolio.www.domain.LoginForm;
 import com.portfolio.www.service.MemberService;
 
@@ -43,12 +48,21 @@ public class MemberController {
 	}
 	
 	@RequestMapping("/login.do")
-	public String login(@ModelAttribute LoginForm form, Model model) {	
-		String msg = "로그인에 실패했습니다.";
+	public String login(@ModelAttribute LoginForm form, HttpServletRequest request, Model model) {	
+		String msg = "";
 		
 		try {
-			if (memberService.login(form)) {
+			MemberDto memberDto = memberService.login(form);
+			
+			if (!ObjectUtils.isEmpty(memberDto)) {
+				// 세션 처리
+				HttpSession session = request.getSession();
+				session.setAttribute("memberId", memberDto.getMemberId());
 				msg = "로그인에 성공했습니다.";
+				return "main";
+				
+			} else {
+				msg = "로그인에 실패했습니다.";
 			}
 		} catch (EmptyResultDataAccessException e) {
 			msg = "존재하지 않는 아이디입니다.";

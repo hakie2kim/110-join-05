@@ -11,6 +11,7 @@ import com.portfolio.www.dao.MemberDao;
 import com.portfolio.www.domain.SignUpForm;
 import com.portfolio.www.dto.EmailDto;
 import com.portfolio.www.dto.MemberAuthDto;
+import com.portfolio.www.dto.MemberDto;
 import com.portfolio.www.util.EmailUtil;
 import com.portfolio.www.domain.LoginForm;
 
@@ -107,13 +108,12 @@ public class MemberService {
 		return true;
 	}
 	
-	public boolean login(LoginForm form) {
-		String encPasswordOfMember = memberDao.findEncPasswdByUsername(form);
-		BCrypt.Result result = BCrypt.verifyer().verify(form.getPassword().toCharArray(), encPasswordOfMember);
-		
-//		if (result.verified)
-		
-		return result.verified;
+	public MemberDto login(LoginForm form) {
+//		String encPasswordOfMember = memberDao.findEncPasswdByUsername(form);
+//		BCrypt.Result result = BCrypt.verifyer().verify(form.getPassword().toCharArray(), encPasswordOfMember);
+		MemberDto member = memberDao.findMemberByUsername(form.getUsername());
+		BCrypt.Result result = BCrypt.verifyer().verify(form.getPassword().toCharArray(), member.getPasswd());
+		return result.verified ? member : null;
 	}
 	
 	private String encPassword(String password) {
