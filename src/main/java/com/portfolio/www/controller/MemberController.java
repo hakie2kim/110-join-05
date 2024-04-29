@@ -1,6 +1,7 @@
 package com.portfolio.www.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -44,9 +45,15 @@ public class MemberController {
 	@RequestMapping("/login.do")
 	public String login(@ModelAttribute LoginForm form, Model model) {	
 		String msg = "로그인에 실패했습니다.";
-		if (memberService.login(form)) {
-			msg = "로그인에 성공했습니다.";
+		
+		try {
+			if (memberService.login(form)) {
+				msg = "로그인에 성공했습니다.";
+			}
+		} catch (EmptyResultDataAccessException e) {
+			msg = "존재하지 않는 아이디입니다.";
 		}
+		
 		model.addAttribute("msg", msg);
 		
 		return "login";

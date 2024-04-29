@@ -166,7 +166,7 @@ docker run --name mysql-lecture -p 53306:3306 -v ~/dev/docker/mysql:/etc/mysql/c
 
   [참고2] https://taetoungs-branch.tistory.com/134
 
-### `sql` 쿼리 문법 오류
+### SpringJdbc `sql` 쿼리 문법 오류
 
 #### 문제 상황
 
@@ -359,4 +359,4 @@ public void setText(String text, boolean html) throws MessagingException {
 - `content type "text/html"`의 형식 → `html`의 값: `true`
 - `content type "text/plain"`의 형식 → `html`의 값: `false`
 
-실제로도 매개 변수가 하나만 있는 `setText()`를 사용하면 `text/plain` 형식으로 `html` 본문이 구성된다. 이때, `setText(String text)` 안에는 `setText(String text, boolean html)`가 있는 것을 확인할 수 있다. 이와 같이, 어떤 메서드의 어떤 파라미터를 기본값으로 지정(`text/plain`)해주고 싶을 때와 아닌 경우를 구별할 떄 이러한 메서드 오버로딩 방식이 많이 사용된다.
+실제로도 매개 변수가 하나만 있는 `setText()`를 사용하면 `text/plain` 형식으로 `html` 본문이 구성된다. 이때, `setText(String text)` 안에는 `setText(String text, boolean html)`가 있는 것을 확인할 수 있다. 이와 같이, 어떤 메서드의 어떤 파라미터를 기본값으로 지정(`text/plain`)해주고 싶을 때와 아닌 경우를 구별할 때 이러한 메서드 오버로딩 방식이 많이 사용된다.
