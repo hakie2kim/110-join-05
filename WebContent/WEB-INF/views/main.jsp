@@ -11,6 +11,15 @@ session = request.getSession();
 function logout() {
 	window.location.href = '/11005/logout.do';
 }
+
+window.onload = function() {
+	const msg = '${msg}';
+	
+	if (msg !== '') {
+		alert(msg);
+		// location.href = '/11005/join-page.do';
+	}
+}
 </script>
 </head>
 <body>

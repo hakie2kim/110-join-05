@@ -40,25 +40,23 @@
 
 2. `MemberController`의 `login()`: `POST` 방식을 이용해 폼에 적은 정보들이 `MemberController`로 전달된다. 이때 `@ModelAttribute`가 전달된 폼의 `name`과 `LoginForm`의 필드에 맞게 바인딩되도록 한다.
 
-3. `MemberService`의 `login()` → `findEncPasswdByUsername()`
+3. `MemberService`의 `login()` → `findMemberByUsername()`
 
-   - 폼을 통해 넘겨 받은 `password`를 암호화한 한 후 `findEncPasswdByUsername()`의 리턴 값과 일치하는지 확인한다.
+   - 폼을 통해 넘겨 받은 `password`를 암호화한 한 후 `findMemberByUsername()`의 리턴 값과 일치하는지 확인한다.
 
-     → 검증에 실패하면 `false` 리턴
+     → 검증에 실패하면 `null` 리턴
 
 4. `MemberDao`
 
-   - `findEncPasswdByUsername()`: `username`과 `member`의 `member_id`가 일치하는 행의 `passwd`를 리턴
+   - `findMemberByUsername()`: `username`과 `member`의 `member_id`가 일치하는 행을 리턴
 
 5. 마지막 `join()`를 통해 전달된 값에 따라 `login.jsp`에 전달될 `msg` 값을 달리한다.
 
-   - `true`: `Model`에 `msg` 값 `"로그인에 성공했습니다."`을 할당
+   - `MemberDto`: `Model`에 `msg` 값 `"로그인에 성공했습니다."`을 할당
 
-   - `false`: `Model`에 `msg` 값 `"로그인에 실패했습니다."`을 할당
+   - `null`: `Model`에 `msg` 값 `"로그인에 실패했습니다."`을 할당
 
 6. 이후 `1.`의 동일한 `login.jsp` 페이지에서 `Model`로부터 넘겨 받은 `msg`의 값을 통해 매시지를 `alert()` 해준다.
-
-7. 회원 가입 페이지로 이동한다. (`location.href='/11005/join-page.do'`)
 
 ### 회원 인증
 
@@ -120,13 +118,23 @@
 
 - [x] 로그인 : `/login.do`
 
+  - [x] 로그인 성공 시 세션에 아이디 저장
+
   - [x] 로그인 성공/실패에 따른 `alert()` 노출하기
+
+  - [x] 로그인 필요한 페이지 필터 추가
+
+- [x] 로그아웃 : `/logout.do`
+
+  - [x] 세션 무효화
 
 ### 예외 처리
 
 - [x] `/emailAuth.do`의 `uri` 값이 빈 문자열이거나 `null`인 경우 (추후 보완 예정)
 
 - [x] `MemberAuthDao`의 `findMemberAuthByUri`의 리턴 값이 `null`인 경우 (추후 보완 예정)
+
+- [x] 회원가입하지 않은 아이디로 로그인하려 시도할 경우
 
 ### 기타
 
@@ -144,7 +152,7 @@ docker run --name mysql-lecture -p 53306:3306 -v ~/dev/docker/mysql:/etc/mysql/c
 
 ## 🚨 트러블 슈팅
 
-### RedirectAttributes 사용 시 한글 깨짐
+### `RedirectAttributes` 사용 시 한글 깨짐
 
 #### 문제 상황
 
@@ -293,6 +301,55 @@ Data truncation이라는 단어에서 알 수 있듯이 `1713673255884`을 datet
 
 `member_auth`의 `expire_dtm`의 데이터 타입을 더 큰 값의 범위를 담을 수 있는 `BIGINT`로 변경했다.
 
+### 회원가입하지 않은 아이디로 로그인 시도
+
+#### 문제 상황
+
+회원가입하지 않은 아이디로 로그인을 시도했을 때 다음과 같은 예외가 발생한다.
+
+```
+org.springframework.dao.EmptyResultDataAccessException: Incorrect result size: expected 1, actual 0
+com.portfolio.www.dao.MemberDao.findMemberByUsername(MemberDao.java:37)
+```
+
+에러에 대한 설명을 공식 문서에서 살펴 보니 다음과 같다.
+
+```
+Data access exception thrown when a result was expected to have at least one row (or element) but zero rows (or elements) were actually returned.
+```
+
+#### 해결 방법
+
+해당 예외는 사용자의 입력값으로 인해 발생했기 때문에 사용자에게 알려주어야 한다. 예외가 발생하면 다음과 같은 방향 `MemberDao` → `MemberService` → `MemberController`으로 예외가 전파된다. 마지막 컨트롤러에서 예외를 `catch`해 뷰에 전달할 메시지를 설정했다.
+
+```java
+@RequestMapping("/login.do")
+public String login(@ModelAttribute LoginForm form, HttpServletRequest request, Model model) {
+  String msg = "";
+
+  try {
+    MemberDto memberDto = memberService.login(form);
+
+    if (!ObjectUtils.isEmpty(memberDto)) {
+      // 세션 처리
+      HttpSession session = request.getSession(false);
+      session.setAttribute("memberId", memberDto.getMemberId());
+      msg = "로그인에 성공했습니다.";
+      return "redirect:/main-page.do";
+
+    } else {
+      msg = "로그인에 실패했습니다.";
+    }
+  } catch (EmptyResultDataAccessException e) {
+    msg = "존재하지 않는 아이디입니다.";
+  }
+
+  model.addAttribute("msg", msg);
+
+  return "login";
+}
+```
+
 ## 📝 메모
 
 ### `bean` 수동 등록 방법
@@ -360,3 +417,9 @@ public void setText(String text, boolean html) throws MessagingException {
 - `content type "text/plain"`의 형식 → `html`의 값: `false`
 
 실제로도 매개 변수가 하나만 있는 `setText()`를 사용하면 `text/plain` 형식으로 `html` 본문이 구성된다. 이때, `setText(String text)` 안에는 `setText(String text, boolean html)`가 있는 것을 확인할 수 있다. 이와 같이, 어떤 메서드의 어떤 파라미터를 기본값으로 지정(`text/plain`)해주고 싶을 때와 아닌 경우를 구별할 때 이러한 메서드 오버로딩 방식이 많이 사용된다.
+
+### 스프링 예외 추상화
+
+스프링은 데이터 접근 계층에서 발생하는 수많은 예외들을 추상화해 DB 기술에 종속적이지 않은 예외 계층을 제공하고 있다. 사실 `JdbcTemplate`을 사용하면 각 리포지토리 메서드에서 발생하는 여러 반복 작업을 대신해준다. 그 반복 작업에는 **예외 발생시 스프링 예외 변환기 실행** 또한 포함되어 있다.
+
+존재하지 않는 아이디로 로그인 시도를 할 때 발생하는 예외 `EmptyResultDataAccessException`는 `NonTransientDataAccessException`을 상속 받는 `RuntimeException` 언체크드 예외 중 하나이다. `NonTransientDataAccessException`는 같은 SQL을 반복해서 실행하면 실패하는 예외이다. (`EmptyResultDataAccessException` → `NonTransientDataAccessException` → `DataAccessException` → `RuntimeException`)

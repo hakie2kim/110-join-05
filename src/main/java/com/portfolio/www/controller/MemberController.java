@@ -56,7 +56,7 @@ public class MemberController {
 			
 			if (!ObjectUtils.isEmpty(memberDto)) {
 				// 세션 처리
-				HttpSession session = request.getSession();
+				HttpSession session = request.getSession(false);
 				session.setAttribute("memberId", memberDto.getMemberId());
 				msg = "로그인에 성공했습니다.";
 				return "redirect:/main-page.do";
