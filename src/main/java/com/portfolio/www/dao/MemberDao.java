@@ -20,18 +20,24 @@ public class MemberDao extends JdbcTemplate {
 	DataSource dataSouce;
 	
 	public int signUp(SignUpForm form) {
-		String sql = "INSERT INTO forum.`member` "
-				+ "(member_id, passwd, email, pwd_chng_dtm, join_dtm) "
-				+ "VALUES('" + form.getUsername()
-				+ "', '" + form.getPassword()
-				+ "', '" + form.getEmail()
-				+ "', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s'), DATE_FORMAT(NOW(), '%Y%m%d%H%i%s'));";
-		return update(sql);
+		/*
+		 * String sql = "INSERT INTO forum.`member` " +
+		 * "(member_id, passwd, email, pwd_chng_dtm, join_dtm) " + "VALUES('" +
+		 * form.getUsername() + "', '" + form.getPassword() + "', '" + form.getEmail() +
+		 * "', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s'), DATE_FORMAT(NOW(), '%Y%m%d%H%i%s'));"
+		 * ;
+		 */
+		String sql = "INSERT INTO forum.`member` (member_id, passwd, email, pwd_chng_dtm, join_dtm) "
+				+ "VALUES(?, ?, ?, DATE_FORMAT(NOW(), '%Y%m%d%H%i%s'), DATE_FORMAT(NOW(), '%Y%m%d%H%i%s'));";
+		Object[] args = {form.getUsername(), form.getPassword(), form.getEmail()};
+		return update(sql, args);
 	}
 	
 	public int cntMemberByUsername(String username) {
-		String sql = String.format("SELECT COUNT(*) FROM forum.`member` WHERE member_id = '%s';", username);
-		return queryForObject(sql, Integer.class);
+//		String sql = String.format("SELECT COUNT(*) FROM forum.`member` WHERE member_id = '%s';", username);
+		String sql = "SELECT COUNT(*) FROM forum.`member` WHERE member_id = ?;";
+		Object[] args = {username};
+		return queryForObject(sql, Integer.class, args);
 	}
 	
 	public MemberDto findMemberByUsername(String username) {
@@ -63,7 +69,9 @@ public class MemberDao extends JdbcTemplate {
 	 */
 	
 	public int findMemberSeqByUsername(String username) {
-		String sql = String.format("SELECT member_seq FROM forum.`member` WHERE member_id = '%s';", username);
-		return queryForObject(sql, Integer.class);
+//		String sql = String.format("SELECT member_seq FROM forum.`member` WHERE member_id = '%s';", username);
+		String sql = "SELECT member_seq FROM forum.`member` WHERE member_id = ?;";
+		Object[] args = {username};
+		return queryForObject(sql, Integer.class, args);
 	}
 }

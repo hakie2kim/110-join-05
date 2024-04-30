@@ -15,15 +15,22 @@ public class MemberAuthDao extends JdbcTemplate {
 	private DataSource dataSource;
 	
 	public int addMemberAuthInfo(MemberAuthDto dto) {
-		String sql = String.format("INSERT INTO forum.member_auth "
-				+ "(member_seq, auth_num, auth_uri, reg_dtm, expire_dtm, auth_yn) "
-				+ "VALUES(%d, '', '%s', DATE_FORMAT(NOW(), '%%Y%%m%%d%%H%%i%%s'), %d, 'N'); ", dto.getMemberSeq(), dto.getAuthUri(), dto.getExpireDtm());
-		return update(sql);
+		/*
+		 * String sql = String.format("INSERT INTO forum.member_auth " +
+		 * "(member_seq, auth_num, auth_uri, reg_dtm, expire_dtm, auth_yn) " +
+		 * "VALUES(%d, '', '%s', DATE_FORMAT(NOW(), '%%Y%%m%%d%%H%%i%%s'), %d, 'N'); ",
+		 * dto.getMemberSeq(), dto.getAuthUri(), dto.getExpireDtm());
+		 */
+		String sql = "INSERT INTO forum.member_auth (member_seq, auth_num, auth_uri, reg_dtm, expire_dtm, auth_yn) "
+				+ "VALUES(?, '', ?, DATE_FORMAT(NOW(), '%%Y%%m%%d%%H%%i%%s'), ?, 'N'); ";
+		Object[] args = {dto.getMemberSeq(), dto.getAuthUri(), dto.getExpireDtm()};
+		return update(sql, args);
 	}
 	
 	public MemberAuthDto findMemberAuthByUri(String uri) {
-		String sql = String.format("SELECT * FROM forum.member_auth WHERE auth_uri = '%s'; ", uri);
-		
+//		String sql = String.format("SELECT * FROM forum.member_auth WHERE auth_uri = '%s'; ", uri);
+		String sql = "SELECT * FROM forum.member_auth WHERE auth_uri = ?; ";
+		Object[] args = {uri};
 		return query(sql, new ResultSetExtractor<MemberAuthDto>() {
 			public MemberAuthDto extractData(ResultSet rs) throws SQLException, DataAccessException {
 				MemberAuthDto dto = null;
@@ -41,13 +48,18 @@ public class MemberAuthDao extends JdbcTemplate {
 				
 				return dto;
 			}
-		});		
+		}, args);		
 	}
 	
 	public int changeAuthYn(String uri) {
-		String sql = String.format("UPDATE forum.member_auth "
-								+ "SET auth_yn='Y' "
-								+ "WHERE auth_uri='%s'; ", uri);
-		return update(sql);
+		/*
+		 * String sql = String.format("UPDATE forum.member_auth " + "SET auth_yn='Y' " +
+		 * "WHERE auth_uri='%s'; ", uri);
+		 */
+		String sql = "UPDATE forum.member_auth "
+				+ "SET auth_yn='Y' "
+				+ "WHERE auth_uri=?; ";
+		Object[] args = {uri};
+		return update(sql, args);
 	}
 }
