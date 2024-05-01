@@ -12,6 +12,7 @@ import com.portfolio.www.domain.SignUpForm;
 import com.portfolio.www.dto.EmailDto;
 import com.portfolio.www.dto.MemberAuthDto;
 import com.portfolio.www.dto.MemberDto;
+import com.portfolio.www.message.Message;
 import com.portfolio.www.util.EmailUtil;
 import com.portfolio.www.domain.LoginForm;
 
@@ -28,13 +29,13 @@ public class MemberService {
 	@Autowired
 	private EmailUtil emailUtil;	
 	
-	public int signUp(SignUpForm form) {
+	public String signUp(SignUpForm form) {
 		if (!verifyUsernameLength(form.getUsername())) {
-			return -1;
+			return Message.ID_LENGTH_LIMIT.getCode();
 		}
 		
 		if (!verifyUsernameDuplicates(form.getUsername())) {
-			return -2;
+			return Message.ID_EXISTS.getCode();
 		}
 		
 		form.setPassword(encPassword(form.getPassword()));
@@ -51,10 +52,10 @@ public class MemberService {
 			
 			// 인증 메일 발송에 실패한 경우
 			if (sendEmailResult.equals("Error"))
-				return -3;
+				return Message.AUTH_EMAIL_SEND_FAIL.getCode();
 		}
 		
-		return 0;
+		return Message.SIGN_UP_SUCCESS.getCode();
 	}
 
 	private EmailDto makeEmailDto(SignUpForm form, MemberAuthDto memAuthDto) {
@@ -64,7 +65,7 @@ public class MemberService {
 		emailDto.setSubject("회원 가입 인증을 위한 메일 안내입니다.");
 		
 		// host + context root + uri
-		String html = String.format("<a href='http://localhost:8080/11005/emailAuth.do/%s'>회원 가입 인증 하기</>",
+		String html = String.format("<a href='http://localhost:8080/11005/emailAuth.do?uri=%s'>회원 가입 인증 하기</>",
 					memAuthDto.getAuthUri()
 				);
 		emailDto.setText(html);

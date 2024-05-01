@@ -423,3 +423,13 @@ public void setText(String text, boolean html) throws MessagingException {
 스프링은 데이터 접근 계층에서 발생하는 수많은 예외들을 추상화해 DB 기술에 종속적이지 않은 예외 계층을 제공하고 있다. 사실 `JdbcTemplate`을 사용하면 각 리포지토리 메서드에서 발생하는 여러 반복 작업을 대신해준다. 그 반복 작업에는 **예외 발생시 스프링 예외 변환기 실행** 또한 포함되어 있다.
 
 존재하지 않는 아이디로 로그인 시도를 할 때 발생하는 예외 `EmptyResultDataAccessException`는 `NonTransientDataAccessException`을 상속 받는 `RuntimeException` 언체크드 예외 중 하나이다. `NonTransientDataAccessException`는 같은 SQL을 반복해서 실행하면 실패하는 예외이다. (`EmptyResultDataAccessException` → `NonTransientDataAccessException` → `DataAccessException` → `RuntimeException`)
+
+### `ENUM`을 통한 메시지 상수화
+
+메시지를 상수화하면 다음과 같은 장점을 얻을 수 있다.
+
+- 메시지를 한 곳에서 일관성 있게 관리 가능하다.
+
+- REST API 사용 시 빠른 통신이 가능하다.
+
+지금은 뷰 템플릿에 간단히 메시지를 보내고 있다. 하지만 REST API를 이용한다고 했을 떄 기존과 같이 큰 용량의 한글 메시지를 보낸다면 빠른 통신이 힘들 것이다. 그렇기 때문에 백엔드와 프론트엔드가 상호 협의한 비교적 가벼운 용량의 코드만을 전달 수신하는 것이다.

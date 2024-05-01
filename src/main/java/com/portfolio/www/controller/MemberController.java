@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.portfolio.www.domain.SignUpForm;
 import com.portfolio.www.dto.MemberDto;
+import com.portfolio.www.message.Message;
 import com.portfolio.www.domain.LoginForm;
 import com.portfolio.www.service.MemberService;
 
@@ -29,19 +30,22 @@ public class MemberController {
 	
 	@RequestMapping("/sign-up.do")
 	public String signUp(@ModelAttribute SignUpForm form, Model model) {
-		int result = memberService.signUp(form);
+		String result = memberService.signUp(form);
 		
-		String msg = "회원가입에 성공했습니다.";
-		switch (result) {
-			case -1:
-				msg = "회원 ID는 7자 이상이어야 합니다.";
-				break;
-			case -2:
-				msg = "중복 등록된 ID입니다.";
-				break;
-			case -3:
-				msg = "인증 메일 발송에 실패했습니다. 관리자에게 문의하세요.";
-		}
+		String code = Message.SIGN_UP_SUCCESS.getCode();
+		String msg = Message.SIGN_UP_SUCCESS.getDescription();
+		if (result.equals(Message.ID_LENGTH_LIMIT.getCode())) {
+			code = Message.ID_LENGTH_LIMIT.getCode();
+			msg = Message.ID_LENGTH_LIMIT.getDescription();
+		} else if (result.equals(Message.ID_EXISTS.getCode())) {
+			code = Message.ID_EXISTS.getCode();
+			msg = Message.ID_EXISTS.getDescription();
+		} else if (result.equals(Message.AUTH_EMAIL_SEND_FAIL.getCode())) {
+			code = Message.AUTH_EMAIL_SEND_FAIL.getCode();
+			msg = Message.AUTH_EMAIL_SEND_FAIL.getDescription();
+		} 
+		
+		model.addAttribute("code", code);
 		model.addAttribute("msg", msg);
 		
 		return "login";
@@ -49,6 +53,7 @@ public class MemberController {
 	
 	@RequestMapping("/login.do")
 	public String login(@ModelAttribute LoginForm form, HttpServletRequest request, Model model) {	
+		String code = "";
 		String msg = "";
 		
 		try {
@@ -58,16 +63,20 @@ public class MemberController {
 				// 세션 처리
 				HttpSession session = request.getSession();
 				session.setAttribute("memberId", memberDto.getMemberId());
-				msg = "로그인에 성공했습니다.";
+				code = Message.SUCCESS.getCode();
+				msg = Message.SUCCESS.getDescription();
 				return "redirect:/main-page.do";
 				
 			} else {
-				msg = "로그인에 실패했습니다.";
+				code = Message.PASSWORD_NOT_MATCH.getCode();
+				msg = Message.PASSWORD_NOT_MATCH.getDescription();
 			}
 		} catch (EmptyResultDataAccessException e) {
-			msg = "존재하지 않는 아이디입니다.";
+			code = Message.USER_NOT_FOUND.getCode();
+			msg = Message.USER_NOT_FOUND.getDescription();
 		}
 		
+		model.addAttribute("code", code);
 		model.addAttribute("msg", msg);
 		
 		return "login";
@@ -79,10 +88,14 @@ public class MemberController {
 			throw new IllegalArgumentException();
 		}
 		
-		String msg = "회원 인증에 실패했습니다.";
+		String code = Message.MEMBER_AUTH_FAIL.getCode();
+		String msg = Message.MEMBER_AUTH_FAIL.getDescription();
 		if (memberService.emailAuth(uri)) {
-			msg = "회원 인증에 성공했습니다.";
+			code = Message.MEMBER_AUTH_SUCCESS.getCode();
+			msg = Message.MEMBER_AUTH_SUCCESS.getDescription();
 		}
+		
+		model.addAttribute("code", code);
 		model.addAttribute("msg", msg);
 		
 		return "login";
