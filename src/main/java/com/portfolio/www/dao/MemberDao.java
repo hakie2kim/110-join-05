@@ -46,6 +46,21 @@ public class MemberDao extends JdbcTemplate {
 		return queryForObject(sql, new MemberRowMapper(), args);
 	}
 	
+	private RowMapper<MemberDto> memberRowMapper() {
+		return (rs, rowNum) -> {
+			MemberDto memberDto = new MemberDto();
+			memberDto.setMemberSeq(rs.getInt("member_seq"));
+			memberDto.setMemberId(rs.getString("member_id"));
+			memberDto.setPasswd(rs.getString("passwd"));
+			memberDto.setMemberNm(rs.getString("member_nm"));
+			memberDto.setEmail(rs.getString("email"));
+			memberDto.setAuthYn(rs.getString("auth_yn"));
+			memberDto.setPwdChngDtm(rs.getString("pwd_chng_dtm"));
+			memberDto.setJoinDtm(rs.getString("join_dtm"));
+			return memberDto;
+		};
+	}
+	
 	class MemberRowMapper implements RowMapper<MemberDto> {
 		@Override
 		public MemberDto mapRow(ResultSet rs, int rowNum) throws SQLException {

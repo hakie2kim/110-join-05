@@ -433,3 +433,56 @@ public void setText(String text, boolean html) throws MessagingException {
 - REST API 사용 시 빠른 통신이 가능하다.
 
 지금은 뷰 템플릿에 간단히 메시지를 보내고 있다. 하지만 REST API를 이용한다고 했을 떄 기존과 같이 큰 용량의 한글 메시지를 보낸다면 빠른 통신이 힘들 것이다. 그렇기 때문에 백엔드와 프론트엔드가 상호 협의한 비교적 가벼운 용량의 코드만을 전달 수신하는 것이다.
+
+### `query()` vs. `queryForObject()`
+
+### 사용 예
+
+- `Member` 하나만을 찾고자 할 때: `queryForObject()` 사용
+
+예) `findMemberByUsername()`
+
+- 모든 `Member`를 찾고자 할 때: `query()` 사용
+
+예) `findAllMembers()`
+
+#### `queryForObject()` 인터페이스 정의
+
+```java
+<T> T queryForObject(String sql, RowMapper<T> rowMapper, Object... args) throws
+DataAccessException;
+```
+
+#### `query()` 인터페이스 정의
+
+```java
+<T> List<T> query(String sql, RowMapper<T> rowMapper, Object... args) throws
+DataAccessException;
+```
+
+#### `RowMapper<T> rowMapper` 예
+
+```java
+private RowMapper<MemberDto> memberRowMapper() {
+  return (rs, rowNum) -> {
+    MemberDto memberDto = new MemberDto();
+    memberDto.setMemberSeq(rs.getInt("member_seq"));
+    memberDto.setMemberId(rs.getString("member_id"));
+    memberDto.setPasswd(rs.getString("passwd"));
+    memberDto.setMemberNm(rs.getString("member_nm"));
+    memberDto.setEmail(rs.getString("email"));
+    memberDto.setAuthYn(rs.getString("auth_yn"));
+    memberDto.setPwdChngDtm(rs.getString("pwd_chng_dtm"));
+    memberDto.setJoinDtm(rs.getString("join_dtm"));
+    return memberDto;
+  };
+}
+```
+
+데이터베이스의 조회 결과를 객체로 변환할 때 사용하는 메서드이다. JDBC를 직접 사용할 때 `ResultSet`과 같은 부분이다. 다만 JdbcTemplate은 다음과 같은 동작을 수행하고 개발자는 `RowMapper`의 내부만 구현한다고 생각하면 된다.
+
+```java
+while (rs.next()) {
+  rowMapper(rs, rowNum) // 구현한 RowMapper의 내부
+}
+```
